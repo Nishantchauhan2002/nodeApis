@@ -1,91 +1,118 @@
 const express = require("express");
-const mongoose = require("mongoose");
-const bodyParser = require("body-parser");
+const connectdb = require("./connection");
+const multer = require("multer");
+const Student = require("./models/student");
+const path = require("path");
 
 const app = express();
-const port = 3000;
 
 // Middleware
-app.use(bodyParser.json());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use("/uploads", express.static("uploads"));
 
-// MongoDB connection
-const mongoURI = "mongodb://localhost:27017/mydb"; // Replace 'mydb' with your database name
-mongoose
-  .connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.error("MongoDB connection error:", err));
+// MongoDB connections
+connectdb();
+// File upload setup
 
-// Define a schema and model
-const DataSchema = new mongoose.Schema(
-  {
-    studentName: { type: String, required: true },
-    age: { type: Number, required: true },
-    gender: { type: String, enum: ["Male", "Female", "Other"], required: true },
-    enrollmentNumber: { type: Number, unique: true, required: true },
-    rollNumber: { type: Number, unique: true, required: true },
-    idProof: { type: String, required: true }, // e.g., Aadhaar, Passport, etc.
-    proofIdNumber: { type: String, required: true },
-    degreeYear: { type: Number, required: true },
-    registrationDate: { type: Date, default: Date.now },
-    startingYear: { type: Number, required: true },
-    endYear: { type: Number, required: true },
-    hostelCheckInTime: { type: String }, // Use "HH:mm:ss" or "HH:mm" format as String
-    hostelCheckoutTime: { type: String },
-    roomNumber: { type: Number },
-    hostelName: { type: String },
-    universityName: { type: String, required: true },
-    department: { type: String, required: true },
-    batch: { type: String }, // Example: "2024-2028"
-    universityCheckInTime: { type: String },
-    universityCheckOutTime: { type: String },
-    fatherName: { type: String },
-    motherName: { type: String },
-    fatherOccupation: { type: String },
-    motherOccupation: { type: String },
-    fatherAge: { type: Number },
-    motherAge: { type: Number },
-    fatherMobileNumber: [{ type: String }], // Array of strings
-    motherMobileNumber: [{ type: String }], // Array of strings
-    siblingName: { type: String },
-    siblingOccupation: { type: String },
-    siblingAge: { type: Number },
-    siblingMobileNumber: { type: String },
-    currentAddress: { type: String },
-    permanentAddress: { type: String },
-    state: { type: String },
-    city: { type: String },
-    pinCode: { type: Number },
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/");
   },
-  {
-    timestamps: true, // Adds createdAt and updatedAt fields automatically
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname)); // Rename file
+  },
+});
+
+const upload = multer({ storage });
+
+// POST routes
+app.post(
+  "/hostel-api/add-new-student",
+  upload.single("userPhoto"),
+  async (req, res) => {
+    try {
+      // const {
+      //   studentName,
+      //   age,
+      //   gender,
+      //   rollNumber,
+      //   roomNumber,
+      //   hostelName,
+      //   department,
+      //   batch,
+      //   fatherName,
+      //   motherName,
+      //   fatherMobileNumber,
+      //   motherMobileNumber,
+      //   currentAddress,
+      //   permanentAddress,
+      //   state,
+      //   city,
+      //   pinCode,
+      // } = req.body;
+
+      // const userPhoto = req.file ? req.file.filename : null;
+
+      // const student = new Student({
+      //   studentName,
+      //   age,
+      //   gender,
+      //   rollNumber,
+      //   roomNumber,
+      //   hostelName,
+      //   department,
+      //   batch,
+      //   fatherName,
+      //   motherName,
+      //   fatherMobileNumber,
+      //   motherMobileNumber,
+      //   currentAddress,
+      //   permanentAddress,
+      //   state,
+      //   city,
+      //   pinCode,
+      //   userPhoto,
+      // });
+
+      const { body, file } = req;
+      const userPhoto = file?.filename || null;
+
+      // Create a new student object dynamically
+      const student = new Student({ ...body, userPhoto });
+
+      await student.save();
+      console.log(student);
+
+      res.status(201).json({
+        stauts: "success",
+        message: "Your data have been saved successfully",
+        data: student,
+      });
+    } catch (error) {
+      res.status(400).json({
+        status: "error",
+        message: "An error occurred while saving student data.",
+        error: error.message,
+      });
+    }
   }
 );
 
-const Data = mongoose.model("Data", DataSchema);
-
-// API routes
-app.post("/api/data", async (req, res) => {
+// GET Route
+app.get("/hostel-api/get-data", async (req, res) => {
   try {
-    const newData = new Data(req.body);
-    await newData.save();
-    res.status(201).json(newData);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
-
-app.get("/api/data", async (req, res) => {
-  try {
-    const allData = await Data.find();
+    const allData = await Student.find();
     const response = {
       status: "success",
-      data: [],
+      data: allData,
     };
     res.status(200).json(response);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
+
 // Start server
 const PORT = 3000;
 app.listen(PORT, () =>
