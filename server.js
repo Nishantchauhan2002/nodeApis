@@ -113,6 +113,41 @@ app.get("/hostel-api/get-data", async (req, res) => {
   }
 });
 
+// GET Route For particular student
+
+app.get(
+  "/hostel-api/get-student-data/rollNumber=:rollNumber",
+  async (req, res) => {
+    try {
+      // const student = await Student.findOne(req.params.rollNumber).populate(
+      //   "rollNumber"
+      // );
+      const { rollNumber } = req.params;
+      const student = await Student.findOne({ rollNumber });
+
+      console.log(student);
+      if (!student) {
+        return res.status(404).json({
+          status: "error",
+          message: `No student found with roll number: ${rollNumber}`,
+        });
+      }
+
+      res.status(200).json({
+        status: "success",
+        message: "Data retrieved successfully",
+        data: student,
+      });
+    } catch (error) {
+      return res.status(400).json({
+        status: "error",
+        message: "An error occurred while fetching student data.",
+        error: error.message,
+      });
+    }
+  }
+);
+
 // Start server
 const PORT = 3000;
 app.listen(PORT, () =>
