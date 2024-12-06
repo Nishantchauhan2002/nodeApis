@@ -32,49 +32,6 @@ app.post(
   upload.single("userPhoto"),
   async (req, res) => {
     try {
-      // const {
-      //   studentName,
-      //   age,
-      //   gender,
-      //   rollNumber,
-      //   roomNumber,
-      //   hostelName,
-      //   department,
-      //   batch,
-      //   fatherName,
-      //   motherName,
-      //   fatherMobileNumber,
-      //   motherMobileNumber,
-      //   currentAddress,
-      //   permanentAddress,
-      //   state,
-      //   city,
-      //   pinCode,
-      // } = req.body;
-
-      // const userPhoto = req.file ? req.file.filename : null;
-
-      // const student = new Student({
-      //   studentName,
-      //   age,
-      //   gender,
-      //   rollNumber,
-      //   roomNumber,
-      //   hostelName,
-      //   department,
-      //   batch,
-      //   fatherName,
-      //   motherName,
-      //   fatherMobileNumber,
-      //   motherMobileNumber,
-      //   currentAddress,
-      //   permanentAddress,
-      //   state,
-      //   city,
-      //   pinCode,
-      //   userPhoto,
-      // });
-
       const { body, file } = req;
       const userPhoto = file?.filename || null;
 
@@ -119,9 +76,6 @@ app.get(
   "/hostel-api/get-student-data/rollNumber=:rollNumber",
   async (req, res) => {
     try {
-      // const student = await Student.findOne(req.params.rollNumber).populate(
-      //   "rollNumber"
-      // );
       const { rollNumber } = req.params;
       const student = await Student.findOne({ rollNumber });
 
